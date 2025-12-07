@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import logo from "../assets/logo.png";
 
 export default function Home() {
@@ -7,9 +7,11 @@ export default function Home() {
   const MAX_SCALE = 1.6; // smaller maximum scale
   const GROW_SPEED = 1;
   const SHRINK_SPEED = 1;
+  const SHRINK_DELAY = 0.5; // seconds
 
   const [talkTime, setTalkTime] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const lastSpeakingRef = useRef(performance.now()); // track last speaking time
 
   useEffect(() => {
     let audioContext;
@@ -47,10 +49,20 @@ export default function Home() {
         const speaking = rms > 0.02;
         setIsSpeaking(speaking);
 
+        if (speaking) {
+          lastSpeakingRef.current = now; // update last speaking time
+        }
+
         setTalkTime(prev => {
           let next = prev;
-          if (speaking) next += dt * GROW_SPEED;
-          else next -= dt * SHRINK_SPEED;
+          if (speaking) {
+            next += dt * GROW_SPEED;
+          } else {
+            const timeSinceSpeaking = (now - lastSpeakingRef.current) / 1000;
+            if (timeSinceSpeaking > SHRINK_DELAY) {
+              next -= dt * SHRINK_SPEED;
+            }
+          }
           return Math.min(Math.max(next, 0), MAX_TALK_TIME);
         });
 
