@@ -7,11 +7,11 @@ export default function Home() {
   const MAX_SCALE = 1.6; // smaller maximum scale
   const GROW_SPEED = 1;
   const SHRINK_SPEED = 1;
-  const SHRINK_DELAY = 0.5; // seconds
+  const SILENCE_DELAY = 0.3; // 0.3 seconds delay
 
   const [talkTime, setTalkTime] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const lastSpeakingRef = useRef(performance.now()); // track last speaking time
+  const lastSpeakingRef = useRef(performance.now());
 
   useEffect(() => {
     let audioContext;
@@ -46,22 +46,22 @@ export default function Home() {
         }
 
         const rms = Math.sqrt(sum / dataArray.length);
-        const speaking = rms > 0.02;
-        setIsSpeaking(speaking);
+        const speakingDetected = rms > 0.02;
 
-        if (speaking) {
-          lastSpeakingRef.current = now; // update last speaking time
+        if (speakingDetected) {
+          lastSpeakingRef.current = now;
         }
+
+        const timeSinceSpeaking = (now - lastSpeakingRef.current) / 1000;
+        const currentlySpeaking = timeSinceSpeaking < SILENCE_DELAY;
+        setIsSpeaking(currentlySpeaking);
 
         setTalkTime(prev => {
           let next = prev;
-          if (speaking) {
+          if (currentlySpeaking) {
             next += dt * GROW_SPEED;
           } else {
-            const timeSinceSpeaking = (now - lastSpeakingRef.current) / 1000;
-            if (timeSinceSpeaking > SHRINK_DELAY) {
-              next -= dt * SHRINK_SPEED;
-            }
+            next -= dt * SHRINK_SPEED;
           }
           return Math.min(Math.max(next, 0), MAX_TALK_TIME);
         });
@@ -85,8 +85,8 @@ export default function Home() {
   const b = Math.floor((1 - progress) * 255);
   const color = `rgb(${r}, ${g}, ${b})`;
 
-  // Responsive sizing with max size for desktop
-  const baseSize = Math.min(window.innerWidth * 0.5, 200); // max width 200px
+  // Responsive sizing
+  const baseSize = Math.min(window.innerWidth * 0.5, 200);
 
   return (
     <div
@@ -102,7 +102,7 @@ export default function Home() {
         position: "relative"
       }}
     >
-      {/* Logo above reset button */}
+      {/* Logo */}
       <img
         src={logo}
         alt="Logo"
@@ -151,7 +151,7 @@ export default function Home() {
         }}
       />
 
-      {/* Text in front of balloon */}
+      {/* Text */}
       <p
         style={{
           marginTop: 20,
