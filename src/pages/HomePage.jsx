@@ -4,14 +4,18 @@ import logo from "../assets/logo.png";
 export default function Home() {
   const MAX_TALK_TIME = 30;
   const MIN_SCALE = 1;
-  const MAX_SCALE = 1.6; // smaller maximum scale
+  const MAX_SCALE = 1.8; // maximum balloon scale
   const GROW_SPEED = 1;
   const SHRINK_SPEED = 1;
-  const SILENCE_DELAY = 0.3; // 0.3 seconds delay
+  const SILENCE_DELAY = 0.3; // 0.3 seconds before switching to No
 
   const [talkTime, setTalkTime] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const lastSpeakingRef = useRef(performance.now());
+
+  // Reset button properties
+  const resetButtonTop = 180;
+  const resetButtonHeight = 40;
 
   useEffect(() => {
     let audioContext;
@@ -88,18 +92,19 @@ export default function Home() {
   // Responsive sizing
   const baseSize = Math.min(window.innerWidth * 0.5, 200);
 
+  // Minimum Y to avoid overlapping reset button
+  const minY = resetButtonTop + resetButtonHeight + 20; // 20px margin
+  const screenCenterY = window.innerHeight / 2;
+  const balloonTop = Math.max(screenCenterY, minY);
+
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
+        position: "relative",
         height: "100vh",
         textAlign: "center",
         padding: 20,
-        boxSizing: "border-box",
-        position: "relative"
+        boxSizing: "border-box"
       }}
     >
       {/* Logo */}
@@ -120,7 +125,7 @@ export default function Home() {
         onClick={() => setTalkTime(0)}
         style={{
           position: "absolute",
-          top: 180,
+          top: resetButtonTop,
           left: "50%",
           transform: "translateX(-50%)",
           padding: "10px 20px",
@@ -143,10 +148,12 @@ export default function Home() {
           height: baseSize,
           borderRadius: "50%",
           backgroundColor: color,
-          transform: `scale(${balloonScale})`,
+          transform: `translate(-50%, -50%) scale(${balloonScale})`,
           transformOrigin: "center",
           transition: "transform 0.1s linear, background-color 0.2s linear",
-          position: "relative",
+          position: "absolute",
+          left: "50%",
+          top: balloonTop,
           zIndex: 0
         }}
       />
@@ -154,7 +161,7 @@ export default function Home() {
       {/* Text */}
       <p
         style={{
-          marginTop: 20,
+          marginTop: balloonTop + baseSize * balloonScale / 2 + 20,
           fontSize: 18,
           position: "relative",
           zIndex: 1
